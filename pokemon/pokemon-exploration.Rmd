@@ -1,0 +1,31 @@
+---
+title: "Pokemon Kaggle Analysis"
+output: html_notebook
+---
+
+
+Import the data set
+
+```{r}
+library(data.table)
+```
+
+
+```{r}
+pokemon <- fread("./inputs/Pokemon.csv")
+```
+
+
+```{r}
+colnames(pokemon)
+```
+
+```{r}
+# question: how to I order things
+pokemon[, .(count = .N),"Type 1"]
+```
+
+```{r}
+pokemon[, .(average = mean(Total)), "Type 1"]
+```
+
