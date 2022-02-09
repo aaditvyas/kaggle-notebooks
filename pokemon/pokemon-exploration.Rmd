@@ -22,6 +22,12 @@ colnames(pokemon)
 print(pokemon, nrows=10)
 ```
 
+> Looks like `Mega` Type pokemon might be polluting our results. Lets exclude mega type pokemon.
+
+```{r}
+pokemon <- pokemon[!grepl("Mega", Name) & !grepl("Primal", Name)]
+```
+
 We'll define these variables as:
 $Total = HP + Attack + Defense + Sp. Atk + Sp. Def + Speed = Total Offense + Total Defense$
 $Total Offense = Attack + Sp. Atk + Speed$
@@ -61,9 +67,7 @@ pokemon[Legendary==TRUE, .N, by = Generation]
 
 ```{r}
 # average total among non legendaries
-pokemon[Legendary==FALSE, 
-        .("Avg Total"=mean(Total), "Avg Total Offense"=mean(`Total Offense`), "Avg Total Defense"=mean(`Total Defense`)), 
-        by = `Type 1`][order(-`Avg Total`)]
+pokemon[Legendary==FALSE, .("Avg Total"=mean(Total), "Avg Total Offense"=mean(`Total Offense`), "Avg Total Defense"=mean(`Total Defense`)), by = `Type 1`][order(-`Avg Total`)]
 ```
 
 > Dragon remains on top when when we exclude `Legendaries`
@@ -71,5 +75,22 @@ pokemon[Legendary==FALSE,
 ```{r}
 # distribution of Total
 ggplot(pokemon[,.(`Type 1`, Total)], aes(x=`Type 1`, y=Total)) + geom_boxplot()
+```
+
+```{r}
+pokemon[Legendary==TRUE,.N] / pokemon[, .N] * 100
+```
+
+> Legendary Pokemon make up 7.9% of all Pokemon
+
+# Which Pokemon are the strongest among Dragon Pokemon
+
+```{r}
+pokemon[`Type 1`=="Dragon", .(Name), keyby=.(-Total)]
+```
+
+*Which pokemon are the strongest in each type?*
+```{r}
+pokemon[order(-Total)][,head(.SD, 3), by=`Type 1`]
 ```
 
