@@ -3,6 +3,7 @@ title: "Pokemon Kaggle Analysis"
 output: html_notebook
 ---
 
+The goal of this notebook is to demonstrate and provide examples of applying the data.table library using a Pokemon dataset from Kaggle.
 
 Import the data set
 
@@ -11,14 +12,8 @@ library(data.table)
 library(ggplot2)
 ```
 
-
 ```{r}
 pokemon <- fread("./inputs/Pokemon.csv")
-```
-
-
-```{r}
-colnames(pokemon)
 print(pokemon, nrows=10)
 ```
 
@@ -94,3 +89,7 @@ pokemon[`Type 1`=="Dragon", .(Name), keyby=.(-Total)]
 pokemon[order(-Total)][,head(.SD, 3), by=`Type 1`]
 ```
 
+*What if we excluded legendary pokemon?*
+```{r}
+pokemon[order(-Total)][Legendary==FALSE, head(.SD, 3), by=`Type 1`]
+```
