@@ -3,29 +3,93 @@ title: "Pokemon Kaggle Analysis"
 output: html_notebook
 ---
 
+The goal of this notebook is to demonstrate and provide examples of applying the data.table library using a Pokemon dataset from Kaggle.
 
 Import the data set
 
 ```{r}
 library(data.table)
+library(ggplot2)
 ```
-
 
 ```{r}
 pokemon <- fread("./inputs/Pokemon.csv")
+print(pokemon, nrows=10)
+```
+
+> Looks like `Mega` Type pokemon might be polluting our results. Lets exclude mega type pokemon.
+
+```{r}
+pokemon <- pokemon[!grepl("Mega", Name) & !grepl("Primal", Name)]
+```
+
+We'll define these variables as:
+$Total = HP + Attack + Defense + Sp. Atk + Sp. Def + Speed = Total Offense + Total Defense$
+$Total Offense = Attack + Sp. Atk + Speed$
+$Total Defense = Defense + Sp. Def + HP$
+
+```{r}
+pokemon <- pokemon[, "Total Offense":=Attack + `Sp. Atk` + `Speed`]
+pokemon <- pokemon[, "Total Defense":=Defense + `Sp. Def` + `HP`]
+```
+
+# Exploration
+
+Questions
+1. how do I plot this as a barplot? Why aren't the columns in correct order?
+
+**First: Lets get a top-level understanding of the distributions of various categories
+
+```{r}
+# distribution of pokemon counts
+pokemon[,.N,by=`Type 1`][order(-N)]
+ggplot(pokemon[,.N,by=`Type 1`][order(-N)], aes(x=`Type 1`, y=N)) + geom_bar(stat="identity")
 ```
 
 
 ```{r}
-colnames(pokemon)
+# average total power by type 1
+pokemon[, .("Avg Total"=mean(Total), "Avg Total Offense"=mean(`Total Offense`), "Avg Total Defense"=mean(`Total Defense`)), by = `Type 1`][order(-`Avg Total`)]
+
+# average total power by generation
+pokemon[, .("Avg Total"=mean(Total), "Avg Total Offense"=mean(`Total Offense`), "Avg Total Defense"=mean(`Total Defense`)), by = Generation][order(-`Avg Total`)]
+
+# what's the count of legendaries by generation
+pokemon[Legendary==TRUE, .N, by = Generation]
+```
+
+> Dragon type Pokemon has the highest average type 1 value whereas Bug type 1 Pokemon have the lowest type 1 value on average.
+
+```{r}
+# average total among non legendaries
+pokemon[Legendary==FALSE, .("Avg Total"=mean(Total), "Avg Total Offense"=mean(`Total Offense`), "Avg Total Defense"=mean(`Total Defense`)), by = `Type 1`][order(-`Avg Total`)]
+```
+
+> Dragon remains on top when when we exclude `Legendaries`
+
+```{r}
+# distribution of Total
+ggplot(pokemon[,.(`Type 1`, Total)], aes(x=`Type 1`, y=Total)) + geom_boxplot()
 ```
 
 ```{r}
-# question: how to I order things
-pokemon[, .(count = .N),"Type 1"]
+pokemon[Legendary==TRUE,.N] / pokemon[, .N] * 100
 ```
+
+> Legendary Pokemon make up 7.9% of all Pokemon
+
+# Which Pokemon are the strongest among Dragon Pokemon
 
 ```{r}
-pokemon[, .(average = mean(Total)), "Type 1"]
+pokemon[`Type 1`=="Dragon", .(Name), keyby=.(-Total)]
 ```
 
+*Which pokemon are the strongest in each type?*
+```{r}
+pokemon[order(-Total)][,head(.SD, 3), by=`Type 1`]
+```
+
+*What if we excluded legendary pokemon?*
+```{r}
+pokemon[order(-Total)][Legendary==FALSE, head(.SD, 3), by=`Type 1`]
+```
